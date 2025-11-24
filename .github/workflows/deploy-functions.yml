@@ -1,5 +1,4 @@
 name: Deploy Supabase Functions
-
 on:
   push:
     branches:
