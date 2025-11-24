@@ -4,23 +4,34 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:  # allows manual trigger
+  workflow_dispatch: # allows manual trigger
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Checkout the repository
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Install Supabase CLI
+      # 2. Install system dependencies
+      - name: Install dependencies
         run: |
-          curl -L https://github.com/supabase/cli/releases/download/v2.58.5/supabase_2.58.5_linux_amd64.tar.gz --output supabase.tar.gz
-          tar -xzf supabase.tar.gz
-          sudo mv supabase /usr/local/bin/
-          supabase --version
+          sudo apt-get update -y
+          sudo apt-get install -y curl wget git unzip tar gzip jq nodejs npm build-essential
 
+      # 3. Setup Supabase CLI (official action, avoids download issues)
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: '2.58.5'
+
+      # 4. Verify Supabase CLI installation
+      - name: Verify Supabase CLI
+        run: supabase --version
+
+      # 5. Deploy processPost function
       - name: Deploy processPost function
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -29,6 +40,7 @@ jobs:
           supabase link --project-ref xadpyaiwqrrwzlqrlysz
           supabase functions deploy processPost --project-ref xadpyaiwqrrwzlqrlysz
 
+      # 6. Test the deployed function
       - name: Test processPost function
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
